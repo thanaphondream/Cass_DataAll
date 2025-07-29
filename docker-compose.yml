@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:5.7
+    container_name: mysql_vi
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: Dream48020?
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/conf.d/my.cnf
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmindream
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: rootpassword
+    depends_on:
+      - db
+
+  app:
+    build: .
+    image: typeorm-app002
+    container_name: typeorm_app
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USERNAME: user
+      DB_PASSWORD: password
+      DB_DATABASE: mydb
+    volumes:
+      - .:/app
+    command: npm run dev
+
+  nginx:
+    image: nginx
+    container_name: nginx-1
+    ports:
+      - "80:80"
+    volumes:
+      - ./html:/usr/share/nginx/html
+
+
+volumes:
+  mysql_data:
