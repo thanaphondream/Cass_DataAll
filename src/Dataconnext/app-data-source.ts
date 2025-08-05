@@ -1,5 +1,8 @@
 import { DataSource } from "typeorm"
 import { MeteoroLogical,Location, Ges, User, So2, Choho, No2, AirQualityStation, PM10, PM25} from "../tableconnext/meteorological_data"
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // export const myDataSource = new DataSource({
 //     type: "mysql",
@@ -28,11 +31,11 @@ import { MeteoroLogical,Location, Ges, User, So2, Choho, No2, AirQualityStation,
 
 export const myDataSource = new DataSource({
     type: 'mysql',
-    host: 'datacass2025.crwka8m26xvq.ap-southeast-2.rds.amazonaws.com',
-    port: 3306,
-    username: 'admin',
-    password: 'Dream480201?',
-    database: 'datacass2025',
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT),
+    username: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
     entities: [MeteoroLogical, Location, Ges, User, So2, Choho, No2, AirQualityStation, PM10, PM25],
     synchronize: true,
     logging: false,
