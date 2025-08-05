@@ -3,13 +3,13 @@ import { myDataSource } from "../Dataconnext/app-data-source";
 import { User } from "../tableconnext/meteorological_data";
 import bcrypt from "bcrypt"
 import jws from "jsonwebtoken"
+import { json } from "stream/consumers";
 
 const user_data = myDataSource.getRepository(User)
 
 export const User_data_register = async (req: Request, res: Response, next: NextFunction) => {
     try{
         const User_find = await user_data.find({ where : {email: req.body.email, username: req.body.username}})
-        console.log(User_find)
         if(User_find.length > 0){
             res.status(402).json({ Error: "อีเมลหรือชื่อนี้ถูกใช้แล้ว.."})
         }else{
@@ -39,6 +39,9 @@ export const User_Login_ = async (req: Request, res: Response, next: NextFunctio
             res.status(401).json({ Error: "ไม่มีข้อมูลสมัครชิก.."})
         }else{
             const token: any = jws.sign({ userId: User_find.id, username: User_find.username, email: User_find.email }, req.body.nametoken, { expiresIn: '1d' });
+            const merge_user = await user_data.merge(User_find,  {name_token: token} );
+            await user_data.save(merge_user)
+            console.log("Token:", merge_user, req.body.nametoken)
             res.json({ token });
         }
     }catch(err){
@@ -70,3 +73,17 @@ export const Show_User = async (req: Request, res: Response, next: NextFunction)
 //   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 //   return emailRegex.test(email);
 // };
+
+export const isTokenshow = (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const finetoken = user_data.findOne({where: {name_token: String(req.params.token)}})
+        if(!finetoken){
+            res.status(404).json({ Error: "ไม่มีข้อมูลสมัครชิก"}) 
+        }else{
+            res.json({finetoken})
+        }
+    }catch(err){
+        console.error(err);
+        res.status(500).json({ error: "เกิดข้อผิดพลาดในเซิร์ฟเวอร์" });
+    }
+}

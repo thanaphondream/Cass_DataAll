@@ -13,6 +13,9 @@ export class User {
 
     @Column()
     password!: string
+
+    @Column({default: "null"})
+    name_token!: string
 }
 
 @Entity()
