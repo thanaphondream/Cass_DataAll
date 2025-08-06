@@ -24,7 +24,7 @@ export const Location_get = async (req: Request, res: Response, next: NextFuncti
     try{
         const Location_ = await myDataSource.getRepository(Location)
         const Location_find = await Location_.find({ relations: ['meteorological_id']})
-        res.json(Location_find)
+        res.json({ Location_find })
     }catch(err){
         console.error(err)
         next(err)
