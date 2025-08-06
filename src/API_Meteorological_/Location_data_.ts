@@ -11,7 +11,7 @@ export const Location_Post_ = async (req: Request, res: Response, next: NextFunc
         }else{
             const location = Location_.create(req.body)
             const location_save = await Location_.save(location)
-            res.json(location_save)
+            res.json({location_save})
         }
     }catch(err){
         console.error(err)
