@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { myDataSource } from "../Dataconnext/app-data-source"
-import { Location } from "../tableconnext/meteorological_data"
+import { myDataSource } from "../Dataconnext/app-data-source";
+import { Location } from "../tableconnext/meteorological_data";
 
 export const Location_Post_ = async (req: Request, res: Response, next: NextFunction) => {
     try{
