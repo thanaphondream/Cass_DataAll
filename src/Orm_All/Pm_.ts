@@ -7,7 +7,7 @@ export const Pm25 = (pm_data?: any, pm_id?: Number) => {
 }
 
 export const Pm25_save = (pm_data?: any, air_id?: Number, pm_dataPm25?: any) => {
-  const pm_set_0 = pm_dataPm25.pm25[0]
+  const pm_set_0 = pm_dataPm25.pm25_id[0]
   const pm_type: {
     color_id: Number,
     aqi: Number,
@@ -23,7 +23,7 @@ export const Pm25_save = (pm_data?: any, air_id?: Number, pm_dataPm25?: any) => 
 }
 
 export const Pm10_save = (pm_data?: any, air_id?: Number, pm_dataPm25?: any) => {
-  const pm_set_0 = pm_dataPm25.pm10[0] 
+  const pm_set_0 = pm_dataPm25.pm10_id[0]
   const pm_type: {
     color_id: Number,
     aqi: Number,
@@ -39,8 +39,8 @@ export const Pm10_save = (pm_data?: any, air_id?: Number, pm_dataPm25?: any) => 
 }
 
 export const Pm_save_10_25 = async(pm25_data?: any, pm10_data?: any, air_id?: Number, pm_dataPm25?: any, pm_dataPm10?: any) => {
-  const pm25_set_0 = pm_dataPm25.pm25[0]
-  const pm10_set_0 = pm_dataPm10.pm10[0]
+  const pm25_set_0 = pm_dataPm25.pm25_id[0]
+  const pm10_set_0 = pm_dataPm10.pm10_id[0]
   const pm25_type: {
     color_id: Number,
     aqi: Number,

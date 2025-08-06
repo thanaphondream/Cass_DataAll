@@ -9,10 +9,10 @@ export const AirQualityStation_save_Data_ = async (req: Request, res: Response, 
         const airpm_data = await myDataSource.getRepository(AirQualityStation)
         const airpm10_data = await myDataSource.getRepository(PM10)
         const airpm25_data = await myDataSource.getRepository(PM25)
-        const {year, month, day, hours, createdAt, area, nameTH, nameEN, stationType, lat, long, location_id, pm25, pm10} = req.body
+        const {year, month, day, hours, createdAt, area, nameTH, nameEN, stationType, lat, long, location_id, pm25_id, pm10_id} = req.body
         const data = {year, month, day, hours, createdAt, area, nameTH, nameEN, stationType, lat, long, location_id}
-        const data_pm25 = {pm25}
-        const data_pm10 = {pm10}
+        const data_pm25 = {pm25_id}
+        const data_pm10 = {pm10_id}
         const airpm_check_date = await airpm_data.findOne({ 
             where: 
             {
@@ -27,12 +27,11 @@ export const AirQualityStation_save_Data_ = async (req: Request, res: Response, 
             // const ppp = await airpm25_data.findOne({ where: { air_id: {id: airpm_check_date.id}}})
             const pm25_checkidair = await Pm25(airpm25_data, airpm_check_date.id)
             const pm10_checkidair = await Pm10(airpm10_data, airpm_check_date.id)
+
             if(!pm25_checkidair){
-                const data_pm25_save = await Pm25_save(airpm25_data, airpm_check_date.id, data_pm25)
+                const data_pm25_save: any =  await Pm25_save(airpm25_data, airpm_check_date.id, data_pm25)
                 res.json({DATA: "ข้อมูลมีอยู่แล้ว..👌ทำการบันทึกแค่:", data_pm25_save}) 
             }if(!pm10_checkidair){
-                console.log(pm10_checkidair)
-                console.log(pm25_checkidair)
                 const data_pm25_save = await Pm10_save(airpm10_data, airpm_check_date.id, data_pm10) 
                 res.json({ DATA: "ข้อมูลมีอยู่แล้ว..👌ทำการบันทึกแค่:", data_pm25_save})
             }else{
@@ -44,9 +43,8 @@ export const AirQualityStation_save_Data_ = async (req: Request, res: Response, 
             res.json({ DATA: "ข้อมูลถูกบันทึกแล้ว...", Pm_air_save})
         }
     }catch(err){
-        console.error("เกิดข้อผิดพลาด: ",err)
-        next(err)
-        res.status(500).json({ Error: "เกิดข้อผิดพลาดไม่สามารเข้าถึงได้ 😑 ", err})
+      console.error("เกิดข้อผิดพลาด: ", err)
+      return res.status(500).json({ Error: "เกิดข้อผิดพลาดไม่สามารถเข้าถึงได้ 😑", err })
     }
 }
 
