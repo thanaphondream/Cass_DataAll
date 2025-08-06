@@ -26,9 +26,11 @@ export const Location_get = async (req: Request, res: Response, next: NextFuncti
         const Location_find = await Location_.find({ relations: ['meteorological_id']})
         res.json({ Location_find })
     }catch(err){
-        console.error(err)
-        next(err)
-        res.json( { Error: "เกิดข้อผิดพลาดไม่สามารโชวข้อมูลได้ 😑"})
+        console.error(err);
+        if (!res.headersSent) {
+            return res.status(500).json({ Error: "เกิดข้อผิดพลาดไม่สามารถโชว์ข้อมูลได้ 😑" });
+        }
+        next(err); 
     }
 }
 
