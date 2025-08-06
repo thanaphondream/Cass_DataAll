@@ -5,9 +5,14 @@ import { Location } from "../tableconnext/meteorological_data"
 export const Location_Post_ = async (req: Request, res: Response, next: NextFunction) => {
     try{
         const Location_ = await myDataSource.getRepository(Location)
-        const location_create = await Location_.create(req.body)
-        const location_save = await Location_.save(location_create)
-        res.status(200).json({ Data: "ข้อมูลบันทึกแล้ว❤️"})
+        const location_check = await Location_.findOne({ where: { name_location: String(req.body.name_location) } })
+        if(location_check){
+            return res.status(400).json({ Error: "มีข้อมูลสถานที่นี้แล้ว กรุณาเปลี่ยนชื่อสถานที่ใหม่"})
+        }else{
+            const location = Location_.create(req.body)
+            const location_save = await Location_.save(location)
+            res.json(location_save)
+        }
     }catch(err){
         console.error(err)
         next(err)
