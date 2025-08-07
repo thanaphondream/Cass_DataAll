@@ -1,14 +1,14 @@
 import { DataSource } from "typeorm"
-import { MeteoroLogical} from "../tableconnext/meteorological_data"
-import { Location } from "../tableconnext/meteorological_data";
-import {Ges} from "../tableconnext/meteorological_data";
-import { User } from "../tableconnext/meteorological_data";
-import { So2 } from "../tableconnext/meteorological_data";
-import { Choho } from "../tableconnext/meteorological_data";
-import { No2 } from "../tableconnext/meteorological_data";
-import { AirQualityStation } from "../tableconnext/meteorological_data";
-import { PM10 } from "../tableconnext/meteorological_data";
-import { PM25 } from "../tableconnext/meteorological_data";
+// import { MeteoroLogical} from "../tableconnext/meteorological_data"
+// import { Location } from "../tableconnext/meteorological_data";
+// import {Ges} from "../tableconnext/meteorological_data";
+// import { User } from "../tableconnext/meteorological_data";
+// import { So2 } from "../tableconnext/meteorological_data";
+// import { Choho } from "../tableconnext/meteorological_data";
+// import { No2 } from "../tableconnext/meteorological_data";
+// import { AirQualityStation } from "../tableconnext/meteorological_data";
+// import { PM10 } from "../tableconnext/meteorological_data";
+// import { PM25 } from "../tableconnext/meteorological_data";
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -45,7 +45,7 @@ export const myDataSource = new DataSource({
     username: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
-    entities: [MeteoroLogical, Location, Ges, User, So2, Choho, No2, AirQualityStation, PM10, PM25],
+    entities: [__dirname + '/../tableconnext/*.{ts,js}'],
     synchronize: true,
     logging: false,
 
