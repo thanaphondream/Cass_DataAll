@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction, json} from "express";
 import { myDataSource } from "../Dataconnext/app-data-source";
-import { Location,Ges, So2, Choho, No2 } from "../tableconnext/meteorological_data";
+import { Location,Ges, So2, Choho, No2, Location_Ges } from "../tableconnext/meteorological_data";
 import { ges_no2, ges_choho, ges_so2 } from "../Orm_All/Gas_";
 
 export const Ges_data_post_ = async (req: Request, res: Response, next: NextFunction) => {
@@ -48,7 +48,7 @@ export const So2_SaveApi = async (req: Request, res: Response, next: NextFunctio
                 month: Number(req.body.month), 
                 day: Number(req.body.day), 
                 hours: Number(req.body.hours),
-                location_id: {id: Number(req.body.location_id)}
+                locationGes_id: {id: Number(req.body.locationGes_id)}
             }
         })
         if(ges_cheke_date){
@@ -84,13 +84,14 @@ export const Choho_SaveApi = async (req: Request, res: Response, next: NextFunct
         const ges_data = await myDataSource.getRepository(Ges)
         const { year, month, day, hours, choho }: any = req.body
         const data = { year, month, day, hours}
+        console.log(req.body)
         const ges_cheke_date = await ges_data.findOne({
             where: { 
                 year: Number(req.body.year), 
                 month: Number(req.body.month), 
                 day: Number(req.body.day), 
                 hours: Number(req.body.hours),
-                location_id: {id: Number(req.body.location_id)}
+                locationGes_id: {id: Number(req.body.locationGes_id)}
             }
         })
         if(ges_cheke_date){
@@ -131,7 +132,7 @@ export const No2_SaveApi = async (req: Request, res: Response, next: NextFunctio
                 month: Number(req.body.month), 
                 day: Number(req.body.day), 
                 hours: Number(req.body.hours),
-                location_id: {id: Number(req.body.location_id)}
+                locationGes_id: {id: Number(req.body.locationGes_id)}
             }
         })
         if(ges_cheke_date){
@@ -163,440 +164,17 @@ export const No2_SaveApi = async (req: Request, res: Response, next: NextFunctio
 }
 
 
-export const Separate_yearmoth = async (req: Request, res: Response, next: NextFunction) => {
+export const Show_data_Ges = async (req: Request, res: Response) => {
     try{
-        const months = await myDataSource.getRepository(Ges)
-        .createQueryBuilder("ges")
-        .select(["ges.year", "ges.month"])
-        .groupBy("ges.year")
-        .addGroupBy("ges.month")
-        .orderBy("ges.year", "DESC")
-        .addOrderBy("ges.month", "DESC")
-        .getRawMany();
-
-        res.json(months);
-
+        const locaton_ = await myDataSource.getRepository(Location)
+        const location_show = await locaton_.find({
+            order: {
+                locationges_id: {ges_id: {year: 'DESC', month: 'DESC', day: 'DESC', hours: 'DESC'}}
+            },
+            relations: ['locationges_id', 'locationges_id.ges_id', 'locationges_id.ges_id.so2_id', 'locationges_id.ges_id.choho_id', 'locationges_id.ges_id.no2_id']
+        })
+        res.json(location_show)
     }catch(err){
-        console.error("เกิดข้อผิดพลาดไม่สามารเข้าถึงได้ 😑",err)
-        next(err)
         res.status(500).json({ Error: "เกิดข้อผิดพลาดไม่สามารเข้าถึงได้ 😑", err})
-    }
-}
-
-export const Show_data_so2 = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const locationRepo = myDataSource.getRepository(Location);
-
-        const data = await locationRepo.createQueryBuilder('location')
-            .leftJoinAndSelect('location.ges_id', 'ges')
-            .leftJoinAndSelect('ges.so2_id', 'so2')
-            .where('ges.year = :year', { year: Number(req.params.year) })
-            .where('ges.location_id = :location_id', { location_id: Number(req.params.location_id)})
-            .andWhere('ges.month = :month', { month: Number(req.params.month) })
-            .andWhere('so2.id IS NOT NULL')
-            .getMany();
-
-        if (data.length === 0) {
-            res.status(404).json({ message: "ไม่มีข้อมูลที่เชื่อมกับ so2_id" });
-        }
-
-        res.json(data);
-
-    } catch (err) {
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-    }
-}
-
-export const So2_Day = async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const locationRepo = myDataSource.getRepository(Location);
-
-        const data = await locationRepo.createQueryBuilder('location')
-            .leftJoinAndSelect('location.ges_id', 'ges')
-            .leftJoinAndSelect('ges.so2_id', 'so2')
-            .where('ges.year = :year', { year: Number(req.params.year) })
-            .andWhere('ges.month = :month', { month: Number(req.params.month) })
-            .andWhere('ges.day = :day', { day: Number(req.params.day) })
-            .andWhere('ges.location_id = :location_id', { location_id: Number(req.params.location_id) })
-            .andWhere('so2.id IS NOT NULL')
-            .getMany();
-
-
-        if (data.length === 0) {
-            res.status(404).json({ message: "ไม่มีข้อมูลที่เชื่อมกับ so2_id" });
-        }
-
-        res.json(data);
-    }catch(err){
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-    }
-}
-
-export const So2_Year = async (req: Request, res: Response, next: NextFunction) => {
-    try{
-       const locationRepo = myDataSource.getRepository(Location);
-
-        const data = await locationRepo.createQueryBuilder('location')
-            .leftJoinAndSelect('location.ges_id', 'ges')
-            .leftJoinAndSelect('ges.so2_id', 'so2')
-            .where('ges.year = :year', { year: Number(req.params.year) })
-            .where('ges.location_id = :location_id', { location_id: Number(req.params.location_id)})
-            .andWhere('so2.id IS NOT NULL')
-            .getMany();
-
-        if (data.length === 0) {
-            res.status(404).json({ message: "ไม่มีข้อมูลที่เชื่อมกับ so2_id" });
-        }
-
-        res.json(data);
-    }catch(err){
-        console.log(err)
-        next(err)
-    }
-}
-
-export const so2_ShowData = async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const ges_data = await myDataSource.getRepository(Ges)
-        const ges_so2_showdata = await ges_data.find({ relations: ['so2_id'], where: {location_id: {name_location: String(req.params.name_location)}}})
-        res.json(ges_so2_showdata)
-    }catch(err){
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-    }
-}
-
-export const Show_data_so2_test = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const locationRepo = myDataSource.getRepository(Location);
-
-        const data = await locationRepo.createQueryBuilder('location')
-            .leftJoinAndSelect('location.ges_id', 'ges')
-            .leftJoinAndSelect('ges.so2_id', 'so2')
-            .where('ges.year = :year', { year: Number(req.params.year) })
-            .andWhere('ges.month = :month', { month: Number(req.params.month) })
-            .andWhere('so2.id IS NOT NULL')
-            .getMany();
-
-        if (data.length === 0) {
-             res.status(404).json({ message: "ไม่มีข้อมูลที่เชื่อมกับ so2_id" });
-        }
-        const transformedData = data.map(location => {
-            const allSo2Ids: any[] = [];
-            
-            location.ges_id.forEach((ges: any) => {
-                if (ges.so2_id && Array.isArray(ges.so2_id)) {
-                    allSo2Ids.push(...ges.so2_id);
-                }
-            });
-
-            const transformedGesId = location.ges_id.length > 0 ? [{
-                ...location.ges_id[0], 
-                so2_id: allSo2Ids
-            }] : []; 
-
-            return {
-                ...location,
-                ges_id: transformedGesId
-            };
-        });
-
-        res.json(transformedData);
-    } catch (err) {
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-    }
-}
-
-
-export const choho_yearmoth = async(req: Request, res: Response, next: NextFunction) => {
-    try{
-     const ges_data = await myDataSource.getRepository(Ges);
-        const ges_fine = await ges_data.find(); 
-
-       
-        const uniqueMonths: Set<string> = new Set(); 
-        const result: { year: number; month: number }[] = []; 
-
-        ges_fine.forEach((item: any) => {
-            const yearMonthKey = `${item.year}-${item.month}`;
-            
-            if (!uniqueMonths.has(yearMonthKey)) {
-                uniqueMonths.add(yearMonthKey); 
-                result.push({ year: item.year, month: item.month }); 
-            }
-        });
-
-        result.sort((a, b) => {
-            if (a.year !== b.year) {
-                return b.year - a.year;
-            }
-            return b.month - a.month;
-        });
-
-        res.json(result);
-    }catch(err){
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-    }
-}
-
-export const Choho_Shodata = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { year, month } = req.params;
-
-    const locationRepo = myDataSource.getRepository(Location);
-
-    const data = await locationRepo
-      .createQueryBuilder('location')
-      .leftJoinAndSelect('location.ges_id', 'ges')
-      .leftJoinAndSelect('ges.choho_id', 'choho')
-      .where('ges.year = :year', { year: Number(year) })
-      .andWhere('ges.month = :month', { month: Number(month) })
-      .andWhere('choho.id IS NOT NULL')
-      .getMany();
-
-    if (data.length === 0) {
-       res.status(404).json({
-        message: "ไม่พบข้อมูลสำหรับปีและเดือนที่ระบุ หรือไม่มีข้อมูล Choho ที่เชื่อมโยง",
-      });
-    }
-
-    res.status(200).json(data);
-  } catch (error) {
-    console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้:", error);
-    res.status(500).json({
-      message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้",
-      error: error,
-    });
-  }
-};
-
-export const No2_Showdata = async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const { year, month } = req.params;
-
-        const locationRepo = myDataSource.getRepository(Location);
-
-        const data = await locationRepo
-        .createQueryBuilder('location')
-        .leftJoinAndSelect('location.ges_id', 'ges') 
-        .leftJoinAndSelect('ges.choho_id', 'choho') 
-        .where('ges.year = :year', { year: Number(year) })
-        .andWhere('ges.month = :month', { month: Number(month) })
-        .andWhere('no2.id IS NOT NULL')
-        .getMany();
-
-        if (data.length === 0) {
-            res.status(404).json({
-            message: "ไม่พบข้อมูลสำหรับปีและเดือนที่ระบุ หรือไม่มีข้อมูล Choho ที่เชื่อมโยง",
-      });
-    }
-
-        res.status(200).json(data);
-    }catch(err){
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-    }
-}
-
-export const Choho_Day_Data = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-     const locationRepo = myDataSource.getRepository(Location);
-     console.log("ddddd", req.params)
-
-        const data = await locationRepo.createQueryBuilder('location')
-            .leftJoinAndSelect('location.ges_id', 'ges') 
-            .leftJoinAndSelect('ges.choho_id', 'choho') 
-            .where('ges.year = :year', { year: Number(req.params.year) })
-            .andWhere('ges.month = :month', { month: Number(req.params.month) })
-            .andWhere('ges.day = :day', { day: Number(req.params.day) })
-            .andWhere('ges.location_id = :location_id', { location_id: Number(req.params.location_id) })
-            .andWhere('choho.id IS NOT NULL')
-            .getMany();
-
-
-        if (data.length === 0) {
-            res.status(404).json({ message: "ไม่มีข้อมูลที่เชื่อมกับ so2_id" });
-        }
-
-        res.json(data);
-  } catch (err) {
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-  }
-};
-
-export const Choho_Month_Data = async (req: Request, res: Response, next: NextFunction) => {
-    try{
-         const locationRepo = myDataSource.getRepository(Location);
-
-    const data = await locationRepo
-      .createQueryBuilder('location')
-      .leftJoinAndSelect('location.ges_id', 'ges') 
-      .leftJoinAndSelect('ges.choho_id', 'choho') 
-      .where('ges.year = :year', { year: Number(req.params.year) })
-      .andWhere('ges.month = :month', { month: Number(req.params.month) })
-      .andWhere('location.id = :location_id', { location_id: Number(req.params.location_id) })
-      .andWhere('choho.id IS NOT NULL')
-      .getMany();
-
-    if (data.length === 0) {
-       res.status(404).json({ message: "ไม่มีข้อมูลที่เชื่อมกับ choho" });
-    }
-
-     res.json(data);
-    }catch(err){
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-    }
-}
-
-export const Choho_Year_Data = async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const locationRepo = myDataSource.getRepository(Location);
-
-        const data = await locationRepo
-        .createQueryBuilder('location')
-        .leftJoinAndSelect('location.ges_id', 'ges') 
-        .leftJoinAndSelect('ges.choho_id', 'choho') 
-        .where('ges.year = :year', { year: Number(req.params.year) })
-        .andWhere('location.id = :location_id', { location_id: Number(req.params.location_id) })
-        .andWhere('choho.id IS NOT NULL')
-        .getMany();
-
-    if (data.length === 0) {
-       res.status(404).json({ message: "ไม่มีข้อมูลที่เชื่อมกับ choho" });
-    }
-
-     res.json(data);
-    }catch(err){
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-    }
-}
-
-export const Data_locationname = async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const months = await myDataSource.getRepository(Ges)
-        .createQueryBuilder("ges")
-        .select(["ges.year", "ges.month"])
-        .groupBy("ges.year")
-        .addGroupBy("ges.month")
-        .orderBy("ges.year", "DESC")
-        .addOrderBy("ges.month", "DESC")
-        .getRawMany();
-
-        res.json(months);
-    }catch(err){
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-    }
-}
-
-export const Chohho_ShowData = async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const ges_data = await myDataSource.getRepository(Ges)
-        const ges_so2_showdata = await ges_data.find({ relations: ['choho_id'], where: {location_id: {name_location: String(req.params.name_location)}}})
-        res.json(ges_so2_showdata)
-    }catch(err){
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-    }
-}
-
-export const No2_Day_Data = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const locationRepo = myDataSource.getRepository(Location);
-    console.log("ddddd", req.params);
-
-    const data = await locationRepo
-      .createQueryBuilder('location')
-      .leftJoinAndSelect('location.ges_id', 'ges')
-      .leftJoinAndSelect('ges.no2_id', 'no2') 
-      .where('ges.year = :year', { year: Number(req.params.year) })
-      .andWhere('ges.month = :month', { month: Number(req.params.month) })
-      .andWhere('ges.day = :day', { day: Number(req.params.day) })
-      .andWhere('location.id = :location_id', { location_id: Number(req.params.location_id) }) 
-      .andWhere('no2.id IS NOT NULL')
-      .getMany();
-
-    if (data.length === 0) {
-       res.status(404).json({ message: "ไม่มีข้อมูลที่เชื่อมกับ no2_id" }); 
-    }
-
-     res.json(data); 
-  } catch (err) {
-    console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-     res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-  }
-};
-
-export const No2_Month_Data = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const locationRepo = myDataSource.getRepository(Location);
-    console.log("ddddd", req.params);
-
-    const data = await locationRepo
-      .createQueryBuilder('location')
-      .leftJoinAndSelect('location.ges_id', 'ges')
-      .leftJoinAndSelect('ges.no2_id', 'no2') 
-      .where('ges.year = :year', { year: Number(req.params.year) })
-      .andWhere('ges.month = :month', { month: Number(req.params.month) })
-      .andWhere('location.id = :location_id', { location_id: Number(req.params.location_id) }) 
-      .andWhere('no2.id IS NOT NULL')
-      .getMany();
-
-    if (data.length === 0) {
-       res.status(404).json({ message: "ไม่มีข้อมูลที่เชื่อมกับ no2_id" }); 
-    }
-
-     res.json(data); 
-  } catch (err) {
-    console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-     res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-  }
-};
-
-
-export const No2_Year_Data = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const locationRepo = myDataSource.getRepository(Location);
-    console.log("ddddd", req.params);
-
-    const data = await locationRepo
-      .createQueryBuilder('location')
-      .leftJoinAndSelect('location.ges_id', 'ges')
-      .leftJoinAndSelect('ges.no2_id', 'no2') 
-      .where('ges.year = :year', { year: Number(req.params.year) })
-      .andWhere('location.id = :location_id', { location_id: Number(req.params.location_id) }) 
-      .andWhere('no2.id IS NOT NULL')
-      .getMany();
-
-    if (data.length === 0) {
-       res.status(404).json({ message: "ไม่มีข้อมูลที่เชื่อมกับ no2_id" }); 
-    }
-
-     res.json(data); 
-  } catch (err) {
-    console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-     res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
-  }
-};
-
-export const No2_ShowData = async (req: Request, res: Response, next: NextFunction) => {
-    try{
-        const ges_data = await myDataSource.getRepository(Ges)
-        const ges_so2_showdata = await ges_data.find({ relations: ['no2_id'], where: {location_id: {name_location: String(req.params.name_location)}}})
-        res.json(ges_so2_showdata)
-    }catch(err){
-        console.error("เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", err);
-        res.status(500).json({ message: "เกิดข้อผิดพลาดไม่สามารถแสดงข้อมูลได้", error: err });
     }
 }

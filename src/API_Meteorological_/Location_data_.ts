@@ -23,7 +23,7 @@ export const Location_Post_ = async (req: Request, res: Response, next: NextFunc
 export const Location_get = async (req: Request, res: Response, next: NextFunction) => {
     try{
         const Location_ = await myDataSource.getRepository(Location)
-        const Location_find = await Location_.find({ relations: ['meteorological_id']})
+        const Location_find = await Location_.find()
         res.json({ Location_find })
     }catch(err){
         console.error(err);

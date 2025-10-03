@@ -1,5 +1,4 @@
 export function ges_no2(data?: any, ges_save?: any, no2_orm?: any){
-    console.log(data.no2[0])
     const _no2 = data.no2[0]
     const data_no2: {
             no2_name: string;

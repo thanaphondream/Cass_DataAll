@@ -1,13 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { myDataSource } from "../Dataconnext/app-data-source";
-import { User } from "../tableconnext/meteorological_data";
+import { User, Ordinary_User } from "../tableconnext/meteorological_data";
 import bcrypt from "bcrypt"
 import jws from "jsonwebtoken"
-import { json } from "stream/consumers";
 
 const user_data = myDataSource.getRepository(User)
 
-export const User_data_register = async (req: Request, res: Response, next: NextFunction) => {
+export const Admin_register = async (req: Request, res: Response, next: NextFunction) => {
     try{
         const User_find = await user_data.find({ where : {email: req.body.email, username: req.body.username}})
         if(User_find.length > 0){
@@ -32,24 +31,32 @@ export const User_data_register = async (req: Request, res: Response, next: Next
     }
 }
 
-export const User_Login_ = async (req: Request, res: Response, next: NextFunction) => {
-    try{
+export const Admin_Login_ = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user_data = myDataSource.getRepository(User);
+    console.log("Login:", req.body)
         const User_find = await user_data.findOne({ where : {email: req.body.email, username: req.body.username}})
-        if(!User_find){
-            res.status(401).json({ Error: "ไม่มีข้อมูลสมัครชิก.."})
-        }else{
-            const token: any = jws.sign({ userId: User_find.id, username: User_find.username, email: User_find.email }, req.body.nametoken, { expiresIn: '1d' });
-            const merge_user = await user_data.merge(User_find,  {name_token: token} );
-            await user_data.save(merge_user)
-            console.log("Token:", merge_user, req.body.nametoken)
-            res.json({ token });
-        }
-    }catch(err){
-        console.error(err)
-        next(err)
-        res.status(501).json(err)
+    
+
+    if (!User_find) {
+       res.status(401).json({ Error: "ไม่มีข้อมูลสมาชิก.." });
+    }else{
+        const secret = process.env.JWT_SECRET || "mySuperSecretKey";  
+        const token: any = jws.sign({ userId: User_find.id, username: User_find.username, email: User_find.email }, secret, { expiresIn: '1d' });
+      res.cookie("token", token, {
+            httpOnly: true,
+            secure: false, 
+            sameSite: "lax", 
+            maxAge: 24 * 60 * 60 * 1000,
+        });
+        res.json({ success: true, user: { id: User_find.id, username: User_find.username } });
     }
-}
+  } catch (err) {
+    console.error(err);
+    next(err);
+     res.status(500).json({ Error: "เกิดข้อผิดพลาด" });
+  }
+};
 
 export const Show_User = async (req: Request, res: Response, next: NextFunction) => {
     try{
@@ -87,3 +94,100 @@ export const isTokenshow = (req: Request, res: Response, next: NextFunction) => 
         res.status(500).json({ error: "เกิดข้อผิดพลาดในเซิร์ฟเวอร์" });
     }
 }
+
+
+export const Register_user = async (req: Request, res: Response) => {
+  try {
+    const { username, email, password, purpose, workplace, phone } = req.body;
+    console.log(req.body)
+    const userRepo = myDataSource.getRepository(Ordinary_User);
+    const existing = await userRepo.findOne({ where: { email } });
+    if (existing) {
+       res.status(400).json({ message: "อีเมลนี้ถูกใช้แล้ว" });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    const newUser = userRepo.create({
+      username,
+      email,
+      password: hashed,
+      purpose,
+      workplace,
+      phone,
+    });
+
+    await userRepo.save(newUser);
+
+     res.status(201).json({ message: "สมัครสมาชิกสำเร็จ", user: newUser });
+  } catch (err) {
+     res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err });
+  }
+};
+
+export const Check_email = async (req: Request, res: Response) => {
+    try{
+        const userRepo = myDataSource.getRepository(Ordinary_User);
+        console.log(req.params.email)
+        const existing = await userRepo.findOne({ where: { email: String(req.params.email) } });
+    if (existing) {
+       res.status(400).json({ message: "อีเมลนี้ถูกใช้แล้ว" });
+    }
+    res.json({Data: true})
+    }catch(err){
+        res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err });
+    }
+}
+
+
+export const Login_user = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+    const userRepo = myDataSource.getRepository(Ordinary_User);
+    const user = await userRepo.findOne({ where: { email: String(email) } });
+
+    if (!user) {
+       res.status(400).json({ message: "ไม่พบผู้ใช้" });
+    }else{
+        const isMatch = await bcrypt.compare(password, user.password)
+        if (!isMatch) {
+            res.status(400).json({ message: "รหัสผ่านไม่ถูกต้อง" });
+        }
+
+        const token = jws.sign(
+        { id: user.id, email: user.email, username: user.username },
+        process.env.JWT_SECRET || "secret123",
+        { expiresIn: "1h" }
+        );
+
+        res.json({ message: "เข้าสู่ระบบสำเร็จ", token, user });
+        }
+  } catch (err) {
+     res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err });
+  }
+};
+
+
+export const decodeToken = async(req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization; 
+    if (!authHeader) {
+       res.status(401).json({ message: "ไม่มี token" });
+    }else{
+        
+        const token = authHeader.split(" ")[1]; 
+        const decoded = jws.decode(token);
+        if (!decoded) {
+        res.status(400).json({ message: "ไม่สามารถถอดรหัส token ได้" });
+        }else{
+            console.log(decoded)
+        res.json({
+        message: "ถอดรหัสสำเร็จ",
+        payload: decoded,
+        });
+        }
+        }
+  } catch (err) {
+    res.status(500).json({ message: "เกิดข้อผิดพลาด", error: err });
+  }
+};
