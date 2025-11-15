@@ -43,14 +43,14 @@ export const Admin_Login_ = async (req: Request, res: Response, next: NextFuncti
     }else{
         const secret = process.env.JWT_SECRET || "mySuperSecretKey";  
         const token: any = jws.sign({ userId: User_find.id, username: User_find.username, email: User_find.email }, secret, { expiresIn: '1d' });
-      res.cookie("token", token, {
-            httpOnly: true,
-            secure: false, 
-            sameSite: "lax", 
-            maxAge: 24 * 60 * 60 * 1000,
-        });
-        res.json({ success: true, user: { id: User_find.id, username: User_find.username } });
-    }
+        res.cookie("token", token, {
+                httpOnly: true,
+                secure: false, 
+                sameSite: "lax", 
+                maxAge: 24 * 60 * 60 * 1000,
+            });
+            res.json({ success: true, user: { id: User_find.id, username: User_find.username } });
+        }
   } catch (err) {
     console.error(err);
     next(err);

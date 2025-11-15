@@ -8,7 +8,7 @@ services:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: mydb
       MYSQL_USER: user
-      MYSQL_PASSWORD: Dream48020?
+      MYSQL_PASSWORD: Cass2025!
     ports:
       - "3307:3306"
     volumes:
@@ -39,20 +39,22 @@ services:
       DB_HOST: db
       DB_PORT: 3306
       DB_USERNAME: user
-      DB_PASSWORD: password
+      DB_PASSWORD: Cass2025!
       DB_DATABASE: mydb
     volumes:
       - .:/app
     command: npm run dev
 
-  # nginx:
-  #   image: nginx
-  #   container_name: nginx-1
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./html:/usr/share/nginx/html
-
+  nginx:
+    image: nginx:latest
+    container_name: nginx_server
+    ports:
+      - "80:80"  
+    depends_on:
+      - app
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: always
 
 volumes:
   mysql_data:

@@ -225,3 +225,36 @@ export const Show_stationAll_Now = async (req: Request, res: Response) => {
         res.status(500).json({ Data: "เกิดข้อมูลผิดพลาดสถานะ500" });
     }
 };
+
+
+export const Time_Air4 = async (req: Request, res: Response) => {
+    try{
+        const AirQualityStation_ = await myDataSource.getRepository(AirQualityStation)
+        const showdata = await AirQualityStation_.find({
+            where: {
+                lastaqi_id: {
+                    year: Number(req.params.year),
+                    month: Number(req.params.month),
+                    day: Number(req.params.day)
+                },
+                location_id: {
+                    id: 3
+                }
+            },
+            relations: [
+                'lastaqi_id',
+                'lastaqi_id.pm25_id',
+                'lastaqi_id.pm10_id',
+                'lastaqi_id.o3_id',
+                'lastaqi_id.co_id',
+                'lastaqi_id.no2_id',
+                'lastaqi_id.so2_id',
+                'lastaqi_id.api'
+            ]
+        })
+
+        res.json({showdata})
+    }catch(err){
+        res.status(500).json({ Data: "เกิดข้อมูลผิดพลาดสถานะ500" });
+    }
+}

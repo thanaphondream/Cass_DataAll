@@ -178,3 +178,32 @@ export const Show_data_Ges = async (req: Request, res: Response) => {
         res.status(500).json({ Error: "เกิดข้อผิดพลาดไม่สามารเข้าถึงได้ 😑", err})
     }
 }
+
+export const Location_Ges_Time = async (req: Request, res: Response) => {
+    try{
+        const { id, year, month, day, hours } = req.params
+        const locaton_ = await myDataSource.getRepository(Location)
+        const location_show = await locaton_.find({
+            where: {
+                id: Number(id),
+               locationges_id: {
+                 ges_id: {
+                    year: Number(year),
+                    month: Number(month),
+                    day: Number(day),
+                    hours: Number(hours)
+                },
+               }
+            },
+            relations: ['locationges_id', 'locationges_id.ges_id', 'locationges_id.ges_id.so2_id', 'locationges_id.ges_id.choho_id', 'locationges_id.ges_id.no2_id']
+        })
+        if(location_show.length === 0){
+            return res.status(404).json({ Error: "ไม่พบข้อมูลตามเวลาที่ระบุ 😑"})
+        }
+        res.json({DATA: location_show
+        })
+    }catch(err){
+        console.error("เกิดข้อผิดพลาดไม่สามารเข้าถึงได้ 😑",err)
+        res.status(500).json({ Error: "เกิดข้อผิดพลาดไม่สามารเข้าถึงได้ 😑", err})
+    }
+}
